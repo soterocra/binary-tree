@@ -4,7 +4,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
+import java.util.stream.Collectors;
 
 public class Main {
 
@@ -43,21 +45,47 @@ public class Main {
 		numbersListLeft.forEach(numbersListLeftCopy::add);
 		numbersListRigth.forEach(numbersListRigthCopy::add);
 		
-		generateTreeDownToUp(new ArrayList<>(numbersListLeft), new LinkedHashMap<>());
-		generateTreeDownToUp(new ArrayList<>(numbersListRigth), new LinkedHashMap<>());
+		LinkedHashMap<String, Integer> downToTopDataLeft = new LinkedHashMap<>();		
+		LinkedHashMap<String, Integer> downToTopDataRigth = new LinkedHashMap<>();		
+		
+		generateTreeDownToUp(new ArrayList<>(numbersListLeft), downToTopDataLeft);
+		generateTreeDownToUp(new ArrayList<>(numbersListRigth), downToTopDataRigth);
 
+		LinkedHashMap<String, Integer> downToTopData = new LinkedHashMap<>();
+		downToTopData.putAll(downToTopDataLeft);
+		downToTopData.putAll(downToTopDataRigth);
+		
+		printResultUpToDown(downToTopDataLeft, true);		
+		printResultUpToDown(downToTopDataRigth, true);
+		System.out.println("Altura:" + altura(downToTopDataLeft, downToTopDataRigth));		
+		
+		System.out.printf("%n%n%n%n%nPOSITIVOS APENAS, FOLHA PARA O TOPO%n%n");
+		System.out.println("graph TD;");
+		printResultUpToDown(positivos(downToTopDataLeft), true);		
+		printResultUpToDown(positivos(downToTopDataRigth), true);
+		
 		headerPrinted = false;
 		
-		generateTreeUpToDown(new ArrayList<>(numbersListLeft), new LinkedHashMap<>());
-		generateTreeUpToDown(new ArrayList<>(numbersListRigth), new LinkedHashMap<>());
+		LinkedHashMap<String, Integer> topToDownDataLeft = new LinkedHashMap<>();		
+		LinkedHashMap<String, Integer> topToDownDataRigth = new LinkedHashMap<>();	
+		
+		generateTreeUpToDown(new ArrayList<>(numbersListLeft), topToDownDataLeft);
+		generateTreeUpToDown(new ArrayList<>(numbersListRigth), topToDownDataRigth);
 
-
+		LinkedHashMap<String, Integer> topToDownData = new LinkedHashMap<>();
+		topToDownData.putAll(topToDownDataLeft);
+		topToDownData.putAll(topToDownDataRigth);
+		
+		printResultUpToDown(topToDownDataLeft, false);		
+		printResultUpToDown(topToDownDataRigth, false);		
+		System.out.println("Altura:" + altura(topToDownDataLeft, topToDownDataRigth));
+		
 	}
 	
 	public static void generateTreeDownToUp(List<Integer> list, LinkedHashMap<String, Integer> destiny) {
 
 		if (list.isEmpty()) {
-			printResultUpToDown(destiny, true);
+//			printResultUpToDown(destiny, true);
 			return;
 		}
 		
@@ -100,7 +128,7 @@ public class Main {
 	public static void generateTreeUpToDown(List<Integer> list, LinkedHashMap<String, Integer> destiny) {
 
 		if (list.isEmpty()) {
-			printResultUpToDown(destiny, false);
+//			printResultUpToDown(destiny, false);
 			return;
 		}
 
@@ -147,15 +175,16 @@ public class Main {
 				generateTreeUpToDown(list, destiny);
 			} else if (list.size() > 1 && correctionFactor == list.size() - 1) {
 				destiny.put("a" + list.get(0), list.get(correctionFactor));
-				printResultUpToDown(destiny, false);
+//				printResultUpToDown(destiny, false);
 			} else {
-				printResultUpToDown(destiny, false);
+//				printResultUpToDown(destiny, false);
 			}			
 		}
 	}
 
 	public static void printResultUpToDown(LinkedHashMap<String, Integer> map, boolean downToUp) {
 		
+		boolean printed = false;
 		Integer skipCount = 0;
 		
 		if (downToUp) {
@@ -175,12 +204,40 @@ public class Main {
 			System.out.println(MERMAID_JS_TYPE);
 		}
 		if (!map.isEmpty()) {
-			System.out.printf("    %s-->%s;%n", rootMember, map.entrySet().stream().skip(skipCount).findFirst().get().getKey().toString().replaceAll("[a-b]", ""));
+			System.out.printf("    %s-->%s;%n", rootMember, map.entrySet().stream().skip(skipCount).findFirst().get().getKey().toString().replaceAll("[a-b]", ""));			
 			map.forEach((k, v) -> {
 				if (v != null) {
 					System.out.printf("    %s-->%s;%n", k.toString().replaceAll("[a-b]", ""), v.toString());
 				}
 			});
 		}
+	}
+	
+	public static Long altura(LinkedHashMap<String, Integer> mapLeft, LinkedHashMap<String, Integer> mapRigth) {
+		Long countLeft = 0L;
+		for (Map.Entry<String, Integer> entry : mapLeft.entrySet()) {
+			if (entry.getKey().startsWith("a")) {
+				++countLeft;				
+			}
+	    }
+		Long countRigth = 0L;
+		for (Map.Entry<String, Integer> entry : mapRigth.entrySet()) {
+			if (entry.getKey().startsWith("a")) {
+				++countRigth;				
+			}
+	    }
+		
+		return (countLeft > countRigth ? countLeft : countRigth) + 2;
+	}
+	
+	public static LinkedHashMap<String, Integer> positivos(LinkedHashMap<String, Integer> map) {
+		Map<? extends String, ? extends Integer> collect = map.entrySet().stream()
+				.filter(x -> Integer.parseInt(x.getKey().replaceAll("[a-b]", "")) % 2 == 0)
+				.collect(Collectors.toMap(x -> x.getKey(), x -> x.getValue()));
+		
+		LinkedHashMap<String, Integer> newMap = new LinkedHashMap<>();
+		newMap.putAll(collect);
+		return newMap;
+		
 	}
 }
